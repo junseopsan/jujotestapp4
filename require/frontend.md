@@ -77,6 +77,16 @@ class BottomNavBar extends StatelessWidget {
 │   │   ├── news.dart       # 뉴스 탭 화면
 │   │   ├── weather.dart    # 날씨 탭 화면
 │   │   ├── my.dart         # MY 탭 화면
+│   │   ├── home_feed.dart  # 홈 피드 화면
+│   │   ├── search.dart     # 검색 UI
+│   │   ├── news.dart       # 뉴스 탭 화면
+│   │   ├── weather.dart    # 날씨 탭 화면
+│   │   ├── my.dart         # MY 탭 화면
+│   │   ├── home_feed.dart  # 홈 피드 화면
+│   │   ├── search.dart     # 검색 UI
+│   │   ├── news.dart       # 뉴스 탭 화면
+│   │   ├── weather.dart    # 날씨 탭 화면
+│   │   ├── my.dart         # MY 탭 화면
 │   ├── widgets/
 │   │   ├── bottom_nav.dart # 하단 탭 UI
 │   │   ├── search_bar.dart # 검색창 UI
@@ -101,37 +111,45 @@ class BottomNavBar extends StatelessWidget {
 # Implementation Plan (구현 계획)
 ## Phase 1: 기본 구조 설정
 - [x] 프로젝트 초기 설정 및 구조 검토
-- [ ] 필요한 디렉토리 구조 생성 (screens, widgets, services, models)
-- [ ] 필요한 패키지 추가 (http, cached_network_image 등)
-- [ ] 메인 앱 구조 및 네비게이션 설정
+- [x] 필요한 디렉토리 구조 생성 (screens, widgets, services, models)
+- [x] 필요한 패키지 추가 (http, cached_network_image 등)
+- [x] 메인 앱 구조 및 네비게이션 설정
 
 ## Phase 2: 핵심 기능 구현
-- [ ] 뉴스 피드 화면 구현
-- [ ] 날씨 화면 구현
-- [ ] MY 프로필 화면 구현
-- [ ] 검색 기능 구현
+- [x] 뉴스 피드 화면 구현
+- [x] 날씨 화면 구현
+- [x] MY 프로필 화면 구현
+- [x] 검색 기능 구현
 
 ## Phase 3: API 연동 및 데이터 관리
-- [ ] Unsplash API 서비스 구현
-- [ ] 뉴스 데이터 모델 정의
-- [ ] 날씨 데이터 모델 정의
+- [x] Unsplash API 서비스 구현
+- [x] 뉴스 데이터 모델 정의
+- [x] 날씨 데이터 모델 정의
 
 ## Phase 4: UI 개선 및 최적화
 - [ ] 성능 최적화
 - [ ] UI/UX 개선
-- [ ] 에러 처리 및 로딩 상태 관리
+- [x] 에러 처리 및 로딩 상태 관리
 
 ---
 
 # Current Progress (현재 진행 상황)
-현재 프로젝트 구조를 검토하고 구현 계획을 세웠습니다. 이제 기본 디렉토리 구조를 생성하고 필요한 패키지를 추가하겠습니다.
+- 프로젝트 초기 설정 및 구조를 완료했습니다.
+- 필요한 디렉토리 구조 (screens, widgets, services, models)를 생성했습니다.
+- 필요한 패키지 (http, cached_network_image, flutter_bloc 등)를 추가했습니다.
+- 뉴스, 날씨, 사용자 모델 클래스를 정의했습니다.
+- API 서비스 클래스를 구현했습니다. 
+- 기본 UI 위젯 (뉴스 카드, 검색 바, 하단 네비게이션 바)을 구현했습니다.
+- 뉴스 화면을 구현했습니다.
+- 날씨 화면을 구현했습니다.
+- MY 프로필 화면을 구현했습니다.
+- 메인 앱 구조 및 네비게이션을 설정했습니다.
+- 에러 처리 및 로딩 상태 관리 기능을 구현했습니다.
 
-최종 목표:
-- 뉴스, 날씨, MY 탭이 있는 직관적인 뉴스 앱 구현
-- Unsplash API를 활용한 뉴스 이미지 제공
-- 사용자 친화적인 UI/UX 제공
+앱의 기본 기능 구현이 완료되었습니다. 메인 화면에서 하단 네비게이션을 통해 뉴스, 날씨, MY 화면 간 전환이 가능합니다. 필요한 데이터 모델과 API 서비스도 구현되어 있으며, 에러 처리 및 로딩 상태 관리도 적용되어 있습니다.
 
 다음 단계:
-- 필요한 디렉토리 구조 생성
-- 필요한 패키지 추가
-- 메인 앱 구조 및 네비게이션 설정
+- 성능 최적화
+- UI/UX 개선 (애니메이션, 테마 등)
+- 단위 테스트 및 통합 테스트 작성
+- 릴리즈 준비
