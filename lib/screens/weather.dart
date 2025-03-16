@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:animations/animations.dart';
 import '../models/weather_model.dart';
 import '../services/api_service.dart';
+import '../widgets/skeleton_loading.dart';
 
 class WeatherScreen extends StatefulWidget {
   const WeatherScreen({super.key});
@@ -9,12 +11,16 @@ class WeatherScreen extends StatefulWidget {
   State<WeatherScreen> createState() => _WeatherScreenState();
 }
 
-class _WeatherScreenState extends State<WeatherScreen> {
+class _WeatherScreenState extends State<WeatherScreen> with AutomaticKeepAliveClientMixin {
   final ApiService _apiService = ApiService();
   Weather? _currentWeather;
   List<Weather> _forecast = [];
   bool _isLoading = true;
   String _city = '서울'; // 기본 도시 설정
+  final List<String> _cities = ['서울', '부산', '인천', '대구', '광주', '대전', '울산', '제주'];
+
+  @override
+  bool get wantKeepAlive => true;
 
   @override
   void initState() {
@@ -23,24 +29,30 @@ class _WeatherScreenState extends State<WeatherScreen> {
   }
 
   Future<void> _loadWeatherData() async {
-    setState(() {
-      _isLoading = true;
-    });
+    if (mounted) {
+      setState(() {
+        _isLoading = true;
+      });
+    }
 
     try {
       final currentWeather = await _apiService.getWeather(_city);
       final forecast = await _apiService.getWeatherForecast(_city);
       
-      setState(() {
-        _currentWeather = currentWeather;
-        _forecast = forecast;
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _currentWeather = currentWeather;
+          _forecast = forecast;
+          _isLoading = false;
+        });
+      }
     } catch (e) {
-      setState(() {
-        _isLoading = false;
-      });
-      _showErrorSnackBar('날씨 정보를 불러오는 중 오류가 발생했습니다.');
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+        _showErrorSnackBar('날씨 정보를 불러오는 중 오류가 발생했습니다.');
+      }
     }
   }
 
@@ -49,6 +61,11 @@ class _WeatherScreenState extends State<WeatherScreen> {
       SnackBar(
         content: Text(message),
         backgroundColor: Colors.red,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10),
+        ),
+        margin: const EdgeInsets.all(10),
       ),
     );
   }
@@ -62,6 +79,9 @@ class _WeatherScreenState extends State<WeatherScreen> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    
     return Scaffold(
       appBar: AppBar(
         title: Text('날씨 - $_city'),
@@ -69,39 +89,28 @@ class _WeatherScreenState extends State<WeatherScreen> {
         actions: [
           PopupMenuButton<String>(
             onSelected: _changeCity,
+            icon: const Icon(Icons.location_city),
+            tooltip: '도시 선택',
             itemBuilder: (BuildContext context) {
-              return [
-                const PopupMenuItem(
-                  value: '서울',
-                  child: Text('서울'),
-                ),
-                const PopupMenuItem(
-                  value: '부산',
-                  child: Text('부산'),
-                ),
-                const PopupMenuItem(
-                  value: '인천',
-                  child: Text('인천'),
-                ),
-                const PopupMenuItem(
-                  value: '대구',
-                  child: Text('대구'),
-                ),
-                const PopupMenuItem(
-                  value: '광주',
-                  child: Text('광주'),
-                ),
-              ];
+              return _cities.map((city) {
+                return PopupMenuItem(
+                  value: city,
+                  child: Text(city),
+                );
+              }).toList();
             },
           ),
+          const SizedBox(width: 8),
         ],
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? _buildLoadingState()
           : _currentWeather == null
               ? _buildErrorState()
               : RefreshIndicator(
                   onRefresh: _loadWeatherData,
+                  color: Theme.of(context).primaryColor,
+                  backgroundColor: isDarkMode ? Colors.grey[800] : Colors.white,
                   child: SingleChildScrollView(
                     physics: const AlwaysScrollableScrollPhysics(),
                     padding: const EdgeInsets.all(16.0),
@@ -131,66 +140,82 @@ class _WeatherScreenState extends State<WeatherScreen> {
   Widget _buildCurrentWeather() {
     if (_currentWeather == null) return const SizedBox.shrink();
     
-    return Card(
-      elevation: 4,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(20.0),
-        child: Column(
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    return Hero(
+      tag: 'current_weather',
+      child: Material(
+        color: Colors.transparent,
+        child: Card(
+          elevation: 4,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(20.0),
+            child: Column(
               children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      '${_currentWeather!.temperature.toStringAsFixed(1)}°C',
-                      style: const TextStyle(
-                        fontSize: 42,
-                        fontWeight: FontWeight.bold,
-                      ),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '${_currentWeather!.temperature.toStringAsFixed(1)}°C',
+                          style: const TextStyle(
+                            fontSize: 42,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        Text(
+                          _currentWeather!.condition,
+                          style: const TextStyle(
+                            fontSize: 20,
+                            color: Colors.grey,
+                          ),
+                        ),
+                      ],
                     ),
-                    Text(
-                      _currentWeather!.condition,
-                      style: const TextStyle(
-                        fontSize: 20,
-                        color: Colors.grey,
+                    TweenAnimationBuilder<double>(
+                      tween: Tween<double>(begin: 0.0, end: 1.0),
+                      duration: const Duration(milliseconds: 800),
+                      builder: (context, value, child) {
+                        return Transform.rotate(
+                          angle: value * 2 * 3.14159,
+                          child: child,
+                        );
+                      },
+                      child: Icon(
+                        _getWeatherIcon(_currentWeather!.icon),
+                        size: 80,
+                        color: _getWeatherColor(_currentWeather!.icon),
                       ),
                     ),
                   ],
                 ),
-                Icon(
-                  _getWeatherIcon(_currentWeather!.icon),
-                  size: 80,
-                  color: _getWeatherColor(_currentWeather!.icon),
+                const SizedBox(height: 20),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    _buildWeatherDetail(
+                      icon: Icons.water_drop,
+                      label: '습도',
+                      value: '${_currentWeather!.humidity.toStringAsFixed(0)}%',
+                    ),
+                    _buildWeatherDetail(
+                      icon: Icons.air,
+                      label: '풍속',
+                      value: '${_currentWeather!.windSpeed.toStringAsFixed(1)} m/s',
+                    ),
+                    _buildWeatherDetail(
+                      icon: Icons.navigation,
+                      label: '풍향',
+                      value: _currentWeather!.windDirection,
+                    ),
+                  ],
                 ),
               ],
             ),
-            const SizedBox(height: 20),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _buildWeatherDetail(
-                  icon: Icons.water_drop,
-                  label: '습도',
-                  value: '${_currentWeather!.humidity.toStringAsFixed(0)}%',
-                ),
-                _buildWeatherDetail(
-                  icon: Icons.air,
-                  label: '풍속',
-                  value: '${_currentWeather!.windSpeed.toStringAsFixed(1)} m/s',
-                ),
-                _buildWeatherDetail(
-                  icon: Icons.navigation,
-                  label: '풍향',
-                  value: _currentWeather!.windDirection,
-                ),
-              ],
-            ),
-          ],
+          ),
         ),
       ),
     );
@@ -233,41 +258,46 @@ class _WeatherScreenState extends State<WeatherScreen> {
         itemCount: _forecast.length,
         itemBuilder: (context, index) {
           final forecast = _forecast[index];
-          return Card(
-            margin: const EdgeInsets.only(right: 12),
-            child: Padding(
-              padding: const EdgeInsets.all(12.0),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    _formatForecastDate(forecast.updateTime),
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
+          return AnimatedOpacity(
+            opacity: 1.0,
+            duration: Duration(milliseconds: 300 + (index * 100)),
+            curve: Curves.easeIn,
+            child: Card(
+              margin: const EdgeInsets.only(right: 12),
+              child: Padding(
+                padding: const EdgeInsets.all(12.0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      _formatForecastDate(forecast.updateTime),
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 8),
-                  Icon(
-                    _getWeatherIcon(forecast.icon),
-                    size: 32,
-                    color: _getWeatherColor(forecast.icon),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    '${forecast.temperature.toStringAsFixed(1)}°C',
-                    style: const TextStyle(
-                      fontSize: 16,
+                    const SizedBox(height: 8),
+                    Icon(
+                      _getWeatherIcon(forecast.icon),
+                      size: 32,
+                      color: _getWeatherColor(forecast.icon),
                     ),
-                  ),
-                  Text(
-                    forecast.condition,
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: Colors.grey,
+                    const SizedBox(height: 8),
+                    Text(
+                      '${forecast.temperature.toStringAsFixed(1)}°C',
+                      style: const TextStyle(
+                        fontSize: 16,
+                      ),
                     ),
-                  ),
-                ],
+                    Text(
+                      forecast.condition,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           );
@@ -323,6 +353,67 @@ class _WeatherScreenState extends State<WeatherScreen> {
     );
   }
 
+  Widget _buildLoadingState() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const WeatherCardSkeleton(),
+          const SizedBox(height: 24),
+          const Text(
+            '5일 예보',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 16),
+          SizedBox(
+            height: 140,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              itemCount: 5,
+              itemBuilder: (context, index) {
+                return Card(
+                  margin: const EdgeInsets.only(right: 12),
+                  child: Padding(
+                    padding: const EdgeInsets.all(12.0),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const SkeletonLoading(
+                          width: 80,
+                          height: 16,
+                        ),
+                        const SizedBox(height: 8),
+                        const SkeletonLoading(
+                          width: 32,
+                          height: 32,
+                          borderRadius: 16,
+                        ),
+                        const SizedBox(height: 8),
+                        const SkeletonLoading(
+                          width: 60,
+                          height: 16,
+                        ),
+                        const SizedBox(height: 4),
+                        const SkeletonLoading(
+                          width: 40,
+                          height: 12,
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildErrorState() {
     return Center(
       child: Column(
@@ -342,9 +433,16 @@ class _WeatherScreenState extends State<WeatherScreen> {
             ),
           ),
           const SizedBox(height: 24),
-          ElevatedButton(
+          ElevatedButton.icon(
             onPressed: _loadWeatherData,
-            child: const Text('새로고침'),
+            icon: const Icon(Icons.refresh),
+            label: const Text('새로고침'),
+            style: ElevatedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 24,
+                vertical: 12,
+              ),
+            ),
           ),
         ],
       ),

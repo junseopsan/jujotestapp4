@@ -127,24 +127,53 @@ class ApiService {
 
   // 유저 정보 가져오기
   Future<User> getUserInfo(String userId) async {
+    // 실제 API 연동 시 구현
+    // 현재는 샘플 데이터 반환
+    await Future.delayed(const Duration(seconds: 1));
+    return User.sampleUser;
+  }
+
+  // 사용자 프로필 가져오기
+  Future<User> getUserProfile() async {
+    // 실제 API 연동 시 구현
+    // 현재는 샘플 데이터 반환
+    await Future.delayed(const Duration(seconds: 1));
+    return User.sampleUser;
+  }
+
+  // 사용자 프로필 업데이트
+  Future<User> updateUserProfile(User user) async {
+    // 실제 API 연동 시 구현
+    // 현재는 업데이트된 사용자 정보 반환
+    await Future.delayed(const Duration(seconds: 1));
+    return user;
+  }
+
+  // 뉴스 기사 가져오기
+  Future<NewsArticle> getNewsArticle(String articleId) async {
     if (_useSampleData) {
-      // 샘플 유저 데이터 사용
-      return User.getSampleUser();
+      // 샘플 데이터에서 ID로 검색
+      await Future.delayed(const Duration(milliseconds: 500));
+      final allNews = await getNews();
+      return allNews.firstWhere(
+        (article) => article.id == articleId,
+        orElse: () => allNews.first,
+      );
     }
 
     try {
       final response = await _client.get(
-        Uri.parse('$_newsBaseUrl/users/$userId?apiKey=$_newsApiKey'),
+        Uri.parse('$_newsBaseUrl/articles/$articleId?apiKey=$_newsApiKey'),
       );
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> jsonData = json.decode(response.body);
-        return User.fromJson(jsonData);
+        return NewsArticle.fromJson(jsonData);
       } else {
-        throw Exception('Failed to load user info: ${response.statusCode}');
+        throw Exception('Failed to load article: ${response.statusCode}');
       }
     } catch (e) {
-      throw Exception('Error fetching user info: $e');
+      throw Exception('Error fetching article: $e');
     }
   }
 

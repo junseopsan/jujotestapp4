@@ -46,6 +46,15 @@ dependencies:
   
   # 날씨 아이콘을 위한 패키지
   weather_icons: ^3.0.0
+  
+  # 테마 관리를 위한 패키지
+  provider: ^6.1.1
+  
+  # 애니메이션 효과를 위한 패키지
+  animations: ^2.0.8
+  
+  # 스켈레톤 로딩 UI를 위한 패키지
+  shimmer: ^3.0.0
 
 dev_dependencies:
   flutter_test:
